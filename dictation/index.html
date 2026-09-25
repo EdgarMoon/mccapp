@@ -127,6 +127,9 @@ textarea { line-height: 1.8; resize: vertical; }
           <option value="test" data-i18n="mode_test">전체 시험</option>
         </select>
       </label>
+      <label id="row-article"><span data-i18n="ed_article">불어 성별 관사로 읽기</span><br>
+        <input type="checkbox" id="set-article" style="width:22px;height:22px;margin-top:8px;accent-color:#2b2118;">
+      </label>
     </div>
     <div class="row">
       <button id="btn-save-list" class="btn" data-i18n="ed_save">저장</button>
@@ -167,7 +170,7 @@ ko: {
   ed_tts_lang: '읽어줄 언어', ed_words: '한 줄에 단어 하나씩', ed_ocr: '사진으로 입력',
   ed_hint: '쉼표(,)나 세미콜론(;)으로 이어 붙여도 각각 나눠서 읽어요. 문장은 한 줄에 하나씩 넣으면 통째로 읽어줘요.',
   ed_settings: '연습 설정', ed_repeats: '반복 횟수', ed_rate: '읽기 속도', ed_gap: '단어 간격',
-  ed_order: '순서', ed_mode: '연습 방식', ed_save: '저장', ed_start: '연습 시작',
+  ed_order: '순서', ed_mode: '연습 방식', ed_save: '저장', ed_start: '연습 시작', ed_article: '불어 성별 관사로 읽기',
   ed_share: '다른 기기로 보내기', ed_make_code: '연습 코드 만들기·복사', ed_import_code: '코드로 가져오기',
   ed_code_ph: "연습 코드가 여기에 표시돼요. 가져올 때는 받은 코드를 여기에 붙여넣고 '코드로 가져오기'를 누르세요.",
   times_1: '1번', times_2: '2번', times_3: '3번', times_4: '4번', times_5: '5번',
@@ -206,7 +209,7 @@ en: {
   ed_tts_lang: 'Read-aloud Language', ed_words: 'One word per line', ed_ocr: 'Input from Photo',
   ed_hint: 'You can join with commas (,) or semicolons (;) — each will be read separately. Put one sentence per line to read it whole.',
   ed_settings: 'Practice Settings', ed_repeats: 'Repetitions', ed_rate: 'Reading Speed', ed_gap: 'Word Gap',
-  ed_order: 'Order', ed_mode: 'Practice Mode', ed_save: 'Save', ed_start: 'Start Practice',
+  ed_order: 'Order', ed_mode: 'Practice Mode', ed_save: 'Save', ed_start: 'Start Practice', ed_article: 'Read French gender as article',
   ed_share: 'Send to Another Device', ed_make_code: 'Create & Copy Practice Code', ed_import_code: 'Import from Code',
   ed_code_ph: "The practice code appears here. To import, paste the code here and press 'Import from Code'.",
   times_1: '1 time', times_2: '2 times', times_3: '3 times', times_4: '4 times', times_5: '5 times',
@@ -245,7 +248,7 @@ fr: {
   ed_tts_lang: 'Langue de lecture', ed_words: 'Un mot par ligne', ed_ocr: 'Saisir depuis une photo',
   ed_hint: 'Vous pouvez joindre avec des virgules (,) ou des points-virgules (;) — chacun sera lu séparément. Mettez une phrase par ligne pour la lire en entier.',
   ed_settings: 'Réglages', ed_repeats: 'Répétitions', ed_rate: 'Vitesse de lecture', ed_gap: 'Pause entre mots',
-  ed_order: 'Ordre', ed_mode: 'Mode', ed_save: 'Enregistrer', ed_start: 'Commencer',
+  ed_order: 'Ordre', ed_mode: 'Mode', ed_save: 'Enregistrer', ed_start: 'Commencer', ed_article: "Lire le genre avec l'article",
   ed_share: 'Envoyer vers un autre appareil', ed_make_code: 'Créer et copier le code', ed_import_code: 'Importer depuis un code',
   ed_code_ph: "Le code s’affiche ici. Pour importer, collez le code ici puis appuyez sur « Importer depuis un code ».",
   times_1: '1 fois', times_2: '2 fois', times_3: '3 fois', times_4: '4 fois', times_5: '5 fois',
@@ -351,16 +354,28 @@ function pickVoice(lang){
   }catch(e){}
   return null;
 }
-/* TTS: 괄호 안 주석((n.f.) 등)은 읽지 않고 단어만 읽는다 */
-function ttsText(text){
-  return String(text || '').replace(/\([^()]*\)/g, ' ').replace(/\s{2,}/g, ' ').trim();
+/* TTS 읽기용 텍스트 가공: 괄호 안 주석((n.f.) 등)은 읽지 않는다.
+   useArticle이 켜져 있고 불어 명사에 성별 표기가 있으면 관사(le/la/l'/les)를 붙여 읽는다. */
+function ttsText(text, lang, useArticle){
+  var s = String(text || ''), gender = null, plural = false;
+  s = s.replace(/\(([^()]*)\)/g, function(m, inner){
+    var gm = /(?:^|\s)(?:n\.?)?\s*([mf])\b/i.exec(inner);
+    if(gm){ gender = gm[1].toLowerCase(); if(/pl\.?/i.test(inner)) plural = true; }
+    return ' ';
+  }).replace(/\s{2,}/g, ' ').trim();
+  if(useArticle && lang === 'fr' && gender && s && !/^(le|la|les|un|une|des|du)\b|^l'|^d'/i.test(s)){
+    var art = plural ? 'les'
+      : (/^[aeiouyàâéèêëîïôûüh]/i.test(s) ? "l'" : (gender === 'm' ? 'le' : 'la'));
+    s = (art === "l'") ? "l'" + s : art + ' ' + s;
+  }
+  return s;
 }
-function speakOnce(text, lang, rate){
+function speakOnce(text, lang, rate, useArticle){
   return new Promise(function(resolve){
     var done = false;
     var fin = function(){ if(!done){ done = true; resolve(); } };
     try{
-      var u = new SpeechSynthesisUtterance(ttsText(text));
+      var u = new SpeechSynthesisUtterance(ttsText(text, lang, useArticle));
       u.lang = (lang === 'fr') ? 'fr-FR' : 'en-US';
       u.rate = rate || 0.9;
       var v = pickVoice(lang);
@@ -379,7 +394,7 @@ function stopAll(){
 async function playWord(text, cfg, my){
   for(var r=0; r<cfg.repeats; r++){
     if(my !== runId) return;
-    await speakOnce(text, cfg.lang, cfg.rate);
+    await speakOnce(text, cfg.lang, cfg.rate, cfg.article);
     if(my !== runId) return;
     await wait(cfg.gap);
   }
@@ -455,6 +470,8 @@ function setEditorLang(l){
   editorLang = l;
   var btns = $('lang-seg').querySelectorAll('button');
   for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-lang')===l);
+  var row = $('row-article');
+  if(row) row.style.display = (l === 'fr') ? '' : 'none';
 }
 function updateCount(){
   var n = parseWords($('words-input').value).length;
@@ -471,7 +488,8 @@ function editorConfig(){
     rate: parseFloat($('set-rate').value),
     gap: parseInt($('set-gap').value, 10),
     order: $('set-order').value,
-    mode: $('set-mode').value
+    mode: $('set-mode').value,
+    article: $('set-article').checked
   };
 }
 function fillEditor(cfg){
@@ -483,11 +501,12 @@ function fillEditor(cfg){
   if(cfg.gap) $('set-gap').value = String(cfg.gap);
   if(cfg.order) $('set-order').value = cfg.order;
   if(cfg.mode) $('set-mode').value = cfg.mode;
+  $('set-article').checked = !!cfg.article;
   updateCount();
 }
 function loadIntoEditor(L){
   fillEditor({ name: L.name, lang: L.lang, words: L.words,
-    repeats: L.repeats, rate: L.rate, gap: L.gap, order: L.order, mode: L.mode });
+    repeats: L.repeats, rate: L.rate, gap: L.gap, order: L.order, mode: L.mode, article: L.article });
   $('btn-save-list').dataset.editId = L.id;
 }
 function saveCurrentList(){
@@ -642,7 +661,7 @@ function showCompletion(order, cfg){
   var btns = area.querySelectorAll('[data-idx]');
   for(var k=0;k<btns.length;k++){
     btns[k].onclick = (function(idx){
-      return function(){ var m = ++runId; speakOnce(order[idx], cfg.lang, cfg.rate); };
+      return function(){ var m = ++runId; speakOnce(order[idx], cfg.lang, cfg.rate, cfg.article); };
     })(k);
   }
   $('btn-again').onclick = function(){ startPractice(cfg); };
