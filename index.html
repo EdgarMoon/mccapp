@@ -26,12 +26,22 @@ h1 { font-size: 1.8rem; }
     <strong id="app1t">받아쓰기 연습</strong>
     <p id="app1d">프랑스어·영어 받아쓰기 연습 앱</p>
   </a>
+  <a class="card" href="/share/">
+    <strong id="app2t">파일 공유</strong>
+    <p id="app2d">기기끼리 사진·파일 바로 주고받기</p>
+  </a>
 </div>
 <script>
 var S = {
-  ko: { title: '우리집 앱', app1t: '받아쓰기 연습', app1d: '프랑스어·영어 받아쓰기 연습 앱' },
-  en: { title: 'Our Apps', app1t: 'Dictation Practice', app1d: 'French & English dictation practice app' },
-  fr: { title: 'Nos applis', app1t: 'Pratique de dictée', app1d: 'Appli de dictée en français et en anglais' }
+  ko: { title: '우리집 앱',
+    app1t: '받아쓰기 연습', app1d: '프랑스어·영어 받아쓰기 연습 앱',
+    app2t: '파일 공유', app2d: '기기끼리 사진·파일 바로 주고받기' },
+  en: { title: 'Our Apps',
+    app1t: 'Dictation Practice', app1d: 'French & English dictation practice app',
+    app2t: 'File Share', app2d: 'Send photos & files directly between devices' },
+  fr: { title: 'Nos applis',
+    app1t: 'Pratique de dictée', app1d: 'Appli de dictée en français et en anglais',
+    app2t: 'Partage de fichiers', app2d: 'Envoyez photos et fichiers entre appareils' }
 };
 function setL(l) {
   try { localStorage.setItem('mcc-ui-lang', l); } catch(e) {}
@@ -39,6 +49,8 @@ function setL(l) {
   document.getElementById('title').textContent = S[l].title;
   document.getElementById('app1t').textContent = S[l].app1t;
   document.getElementById('app1d').textContent = S[l].app1d;
+  document.getElementById('app2t').textContent = S[l].app2t;
+  document.getElementById('app2d').textContent = S[l].app2d;
   document.documentElement.lang = l;
 }
 document.querySelectorAll('.lang button').forEach(function(b){ b.onclick = function(){ setL(b.dataset.l); }; });
