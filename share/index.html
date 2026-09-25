@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>파일 공유</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; background: #f7f1e1; color: #333; }
+#app { max-width: 700px; margin: 0 auto; padding: 24px 20px 60px; }
+.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.seg { display: flex; background: #e7ddc4; border-radius: 999px; padding: 3px; }
+.seg button { border: none; background: transparent; border-radius: 999px; padding: 8px 14px; font-size: .85rem; cursor: pointer; color: #666; }
+.seg button.on { background: #2b2118; color: #fff; }
+h1 { font-size: 1.7rem; margin: 8px 0 4px; }
+.subtitle { color: #8a7f66; margin: 0 0 20px; line-height: 1.6; }
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.tabs button { flex: 1; border: 2px solid #e7ddc4; background: #fff; border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 700; cursor: pointer; color: #8a7f66; }
+.tabs button.on { border-color: #2b2118; color: #2b2118; background: #fff; }
+.panel { display: none; }
+.panel.on { display: block; }
+.card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.lbl { display: block; font-weight: 700; margin: 0 0 8px; }
+.hint { color: #aaa; font-size: .85rem; margin: 8px 0 0; line-height: 1.6; }
+.center { text-align: center; }
+textarea.code { width: 100%; border: 2px solid #e7ddc4; border-radius: 12px; padding: 12px; font-size: .8rem; font-family: monospace; background: #fdfaf2; resize: vertical; }
+textarea.text { width: 100%; border: 2px solid #e7ddc4; border-radius: 12px; padding: 12px; font-size: .95rem; background: #fdfaf2; resize: vertical; }
+.btn { border: 2px solid #e7ddc4; background: #fff; border-radius: 12px; padding: 12px 20px; font-size: 1rem; font-weight: 700; cursor: pointer; color: #333; }
+.btn.primary { background: #2b2118; border-color: #2b2118; color: #fff; }
+.btn.ghost { border: none; background: none; color: #8a7f66; padding: 8px; }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+.file-list { margin: 10px 0; }
+.file-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid #f0e9d6; font-size: .95rem; }
+.file-row .meta { color: #aaa; font-size: .8rem; }
+#qr { display: flex; justify-content: center; margin: 16px 0; }
+#qr img, #qr canvas { border: 8px solid #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.progress { height: 10px; background: #e7ddc4; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+.progress > div { height: 100%; width: 0; background: #2b2118; border-radius: 99px; transition: width .2s; }
+.status { font-weight: 700; margin: 10px 0; }
+.status.ok { color: #2e7d32; }
+.status.wait { color: #b7791f; }
+#scan-video { width: 100%; border-radius: 12px; background: #000; }
+.recv-text { background: #fdfaf2; border: 2px solid #e7ddc4; border-radius: 12px; padding: 12px; white-space: pre-wrap; word-break: break-all; font-size: .95rem; margin: 8px 0; }
+#toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #2b2118; color: #fff; padding: 12px 22px; border-radius: 999px; font-size: .95rem; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; z-index: 50; }
+#toast.show { opacity: 1; }
+a.dl { color: #2b2118; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="lang-switch"><div class="seg" id="ui-lang-seg">
+    <button type="button" data-ui-lang="ko" class="on">한국어</button>
+    <button type="button" data-ui-lang="en">English</button>
+    <button type="button" data-ui-lang="fr">Français</button>
+  </div></div>
+
+  <h1 data-i18n="title">파일 공유</h1>
+  <p class="subtitle" data-i18n="subtitle">서버 없이 기기끼리 직접 주고받아요.<br>같은 와이파이에 있으면 가장 빨라요.</p>
+
+  <div class="tabs">
+    <button id="tab-send" class="on" data-i18n="tab_send">📤 보내기</button>
+    <button id="tab-recv" data-i18n="tab_recv">📥 받기</button>
+  </div>
+
+  <!-- 보내기 -->
+  <section id="panel-send" class="panel on">
+    <div class="card">
+      <label class="lbl" data-i18n="send_files">보낼 파일</label>
+      <div class="row">
+        <label class="btn"><span data-i18n="send_pick">파일 선택</span><input type="file" id="send-files" multiple hidden></label>
+        <span id="send-count" class="hint"></span>
+      </div>
+      <div id="send-file-list" class="file-list"></div>
+      <label class="lbl" data-i18n="send_text">같이 보낼 텍스트 (선택)</label>
+      <textarea id="send-text" class="text" rows="3" data-i18n-ph="send_text_ph" placeholder="받아쓰기 코드, 메모 등을 붙여넣으세요"></textarea>
+      <div class="row">
+        <button id="btn-make-offer" class="btn primary" data-i18n="send_make">공유 코드 만들기</button>
+      </div>
+      <p class="hint" data-i18n="send_hint">코드를 만든 뒤 받는 기기에서 입력(또는 QR 스캔)하세요.</p>
+    </div>
+
+    <div class="card" id="offer-card" style="display:none">
+      <label class="lbl" data-i18n="offer_title">공유 코드</label>
+      <div id="qr"></div>
+      <textarea id="offer-code" class="code" rows="4" readonly></textarea>
+      <div class="row">
+        <button id="btn-copy-offer" class="btn" data-i18n="copy">복사</button>
+      </div>
+      <label class="lbl" data-i18n="answer_title">받는 기기의 응답 코드 입력</label>
+      <textarea id="answer-code" class="code" rows="4" data-i18n-ph="answer_ph" placeholder="받는 기기에 표시된 응답 코드를 붙여넣으세요"></textarea>
+      <div class="row">
+        <button id="btn-connect" class="btn primary" data-i18n="connect">연결하기</button>
+      </div>
+      <p class="status wait" id="send-status" style="display:none"></p>
+      <div id="send-progress"></div>
+    </div>
+  </section>
+
+  <!-- 받기 -->
+  <section id="panel-recv" class="panel">
+    <div class="card">
+      <label class="lbl" data-i18n="recv_offer">공유 코드 입력</label>
+      <div class="row">
+        <button id="btn-scan" class="btn" data-i18n="recv_scan">📷 QR 스캔</button>
+      </div>
+      <video id="scan-video" style="display:none" playsinline></video>
+      <div class="row" id="scan-row" style="display:none">
+        <button id="btn-scan-stop" class="btn" data-i18n="recv_scan_stop">스캔 중지</button>
+      </div>
+      <textarea id="offer-input" class="code" rows="4" data-i18n-ph="recv_offer_ph" placeholder="보내는 기기의 공유 코드를 붙여넣으세요"></textarea>
+      <div class="row">
+        <button id="btn-make-answer" class="btn primary" data-i18n="recv_make">응답 코드 만들기</button>
+      </div>
+    </div>
+
+    <div class="card" id="answer-card" style="display:none">
+      <label class="lbl" data-i18n="recv_answer_title">응답 코드</label>
+      <p class="hint" data-i18n="recv_answer_hint">이 코드를 보내는 기기에 입력하세요. 입력되면 자동으로 연결돼요.</p>
+      <textarea id="answer-code-out" class="code" rows="4" readonly></textarea>
+      <div class="row">
+        <button id="btn-copy-answer" class="btn" data-i18n="copy">복사</button>
+      </div>
+      <p class="status wait" id="recv-status" style="display:none"></p>
+      <div id="recv-list"></div>
+    </div>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var wait = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+
+/* ---------- i18n ---------- */
+var I18N = {
+ko: {
+  title: '파일 공유',
+  subtitle: '서버 없이 기기끼리 직접 주고받아요.<br>같은 와이파이에 있으면 가장 빨라요.',
+  tab_send: '📤 보내기', tab_recv: '📥 받기',
+  send_files: '보낼 파일', send_pick: '파일 선택',
+  send_text: '같이 보낼 텍스트 (선택)', send_text_ph: '받아쓰기 코드, 메모 등을 붙여넣으세요',
+  send_make: '공유 코드 만들기', send_hint: '코드를 만든 뒤 받는 기기에서 입력(또는 QR 스캔)하세요.',
+  offer_title: '공유 코드', copy: '복사', copied: '복사됐어요.',
+  answer_title: '받는 기기의 응답 코드 입력', answer_ph: '받는 기기에 표시된 응답 코드를 붙여넣으세요',
+  connect: '연결하기',
+  recv_offer: '공유 코드 입력', recv_scan: '📷 QR 스캔', recv_scan_stop: '스캔 중지',
+  recv_offer_ph: '보내는 기기의 공유 코드를 붙여넣으세요',
+  recv_make: '응답 코드 만들기',
+  recv_answer_title: '응답 코드', recv_answer_hint: '이 코드를 보내는 기기에 입력하세요. 입력되면 자동으로 연결돼요.',
+  st_waiting: '연결 대기 중...', st_connected: '연결됐어요! 전송 시작...',
+  st_sending: '전송 중...', st_done: '전송 완료! 🎉', st_receiving: '받는 중...',
+  st_failed: '연결에 실패했어요. 코드를 다시 확인하세요.',
+  need_files: '파일을 먼저 선택하세요.', need_offer: '공유 코드를 입력하세요.', need_answer: '응답 코드를 입력하세요.',
+  bad_code: '코드를 읽지 못했어요. 다시 확인하세요.',
+  scan_fail: '카메라를 열 수 없어요.', scan_found: 'QR 코드를 찾았어요!',
+  download: '다운로드', open_text: '받은 텍스트',
+  copied_text: '텍스트가 복사됐어요.'
+},
+en: {
+  title: 'File Share',
+  subtitle: 'Send directly between devices, no server.<br>Fastest on the same Wi-Fi.',
+  tab_send: '📤 Send', tab_recv: '📥 Receive',
+  send_files: 'Files to send', send_pick: 'Choose files',
+  send_text: 'Text to send along (optional)', send_text_ph: 'Paste a dictation code, memo, etc.',
+  send_make: 'Create share code', send_hint: 'On the receiving device, enter the code (or scan the QR).',
+  offer_title: 'Share code', copy: 'Copy', copied: 'Copied.',
+  answer_title: 'Enter the receiver\'s answer code', answer_ph: 'Paste the answer code shown on the receiving device',
+  connect: 'Connect',
+  recv_offer: 'Enter share code', recv_scan: '📷 Scan QR', recv_scan_stop: 'Stop scanning',
+  recv_offer_ph: 'Paste the share code from the sending device',
+  recv_make: 'Create answer code',
+  recv_answer_title: 'Answer code', recv_answer_hint: 'Enter this code on the sending device. It connects automatically.',
+  st_waiting: 'Waiting for connection...', st_connected: 'Connected! Starting transfer...',
+  st_sending: 'Sending...', st_done: 'Transfer complete! 🎉', st_receiving: 'Receiving...',
+  st_failed: 'Connection failed. Check the codes.',
+  need_files: 'Choose files first.', need_offer: 'Enter the share code.', need_answer: 'Enter the answer code.',
+  bad_code: 'Couldn\'t read the code. Check again.',
+  scan_fail: 'Couldn\'t open the camera.', scan_found: 'QR code found!',
+  download: 'Download', open_text: 'Received text',
+  copied_text: 'Text copied.'
+},
+fr: {
+  title: 'Partage de fichiers',
+  subtitle: 'Envoyez directement entre appareils, sans serveur.<br>Le plus rapide sur le même Wi-Fi.',
+  tab_send: '📤 Envoyer', tab_recv: '📥 Recevoir',
+  send_files: 'Fichiers à envoyer', send_pick: 'Choisir des fichiers',
+  send_text: 'Texte à joindre (facultatif)', send_text_ph: 'Collez un code de dictée, un mémo, etc.',
+  send_make: 'Créer le code de partage', send_hint: 'Sur l’appareil destinataire, saisissez le code (ou scannez le QR).',
+  offer_title: 'Code de partage', copy: 'Copier', copied: 'Copié.',
+  answer_title: 'Saisissez le code de réponse', answer_ph: 'Collez le code de réponse affiché sur l’appareil destinataire',
+  connect: 'Connecter',
+  recv_offer: 'Saisir le code de partage', recv_scan: '📷 Scanner le QR', recv_scan_stop: 'Arrêter le scan',
+  recv_offer_ph: 'Collez le code de partage de l’appareil expéditeur',
+  recv_make: 'Créer le code de réponse',
+  recv_answer_title: 'Code de réponse', recv_answer_hint: 'Saisissez ce code sur l’appareil expéditeur. La connexion est automatique.',
+  st_waiting: 'En attente de connexion...', st_connected: 'Connecté ! Début du transfert...',
+  st_sending: 'Envoi en cours...', st_done: 'Transfert terminé ! 🎉', st_receiving: 'Réception en cours...',
+  st_failed: 'Échec de connexion. Vérifiez les codes.',
+  need_files: 'Choisissez d’abord des fichiers.', need_offer: 'Saisissez le code de partage.', need_answer: 'Saisissez le code de réponse.',
+  bad_code: 'Code illisible. Vérifiez à nouveau.',
+  scan_fail: 'Caméra inaccessible.', scan_found: 'QR code trouvé !',
+  download: 'Télécharger', open_text: 'Texte reçu',
+  copied_text: 'Texte copié.'
+}};
+var uiLang = 'ko';
+function t(k){ var v = (I18N[uiLang]||I18N.ko)[k]; return (v===undefined)?k:v; }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg){
+  var el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+function setUiLang(l){
+  if(!I18N[l]) l = 'ko';
+  uiLang = l;
+  try{ localStorage.setItem('mcc-ui-lang', l); }catch(e){}
+  document.documentElement.lang = l;
+  var btns = $('ui-lang-seg').querySelectorAll('button');
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-ui-lang')===l);
+  var els = document.querySelectorAll('[data-i18n]');
+  for(var j=0;j<els.length;j++){
+    var v = t(els[j].getAttribute('data-i18n'));
+    if(typeof v === 'string') els[j].innerHTML = v;
+  }
+  var phs = document.querySelectorAll('[data-i18n-ph]');
+  for(var k=0;k<phs.length;k++){
+    var pv = t(phs[k].getAttribute('data-i18n-ph'));
+    if(typeof pv === 'string') phs[k].setAttribute('placeholder', pv);
+  }
+  document.title = t('title');
+  renderSendList();
+}
+function loadUiLang(){
+  var l = 'ko';
+  try{ l = localStorage.getItem('mcc-ui-lang') || 'ko'; }catch(e){}
+  uiLang = I18N[l] ? l : 'ko';
+}
+
+/* ---------- WebRTC ---------- */
+function makePC(){
+  return new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+}
+function waitIce(pc){
+  return new Promise(function(res){
+    if(pc.iceGatheringState === 'complete') return res();
+    var done = false;
+    var fin = function(){ if(!done){ done = true; res(); } };
+    pc.onicegatheringstatechange = function(){ if(pc.iceGatheringState === 'complete') fin(); };
+    setTimeout(fin, 10000);
+  });
+}
+function encCode(obj){
+  var json = JSON.stringify(obj);
+  var bin = unescape(encodeURIComponent(json));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decCode(code){
+  var s = String(code).trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length % 4) s += '=';
+  var bin = atob(s);
+  return JSON.parse(decodeURIComponent(escape(bin)));
+}
+function fmtSize(n){
+  if(n < 1024) return n + ' B';
+  if(n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  return (n/1048576).toFixed(1) + ' MB';
+}
+
+/* ---------- 보내기 ---------- */
+var sendFiles = [];
+var sendPC = null, sendDC = null;
+
+function renderSendList(){
+  var box = $('send-file-list');
+  box.innerHTML = '';
+  sendFiles.forEach(function(f, idx){
+    var div = document.createElement('div');
+    div.className = 'file-row';
+    div.innerHTML = '<div><strong>'+esc(f.name)+'</strong><div class="meta">'+fmtSize(f.size)+'</div></div>' +
+      '<button class="btn ghost" data-idx="'+idx+'">✕</button>';
+    div.querySelector('button').onclick = function(){ sendFiles.splice(idx,1); renderSendList(); };
+    box.appendChild(div);
+  });
+  $('send-count').textContent = sendFiles.length ? (sendFiles.length + ' / ' + fmtSize(sendFiles.reduce(function(a,f){return a+f.size;},0))) : '';
+}
+
+function setSendStatus(msg, cls){
+  var el = $('send-status');
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent = msg || '';
+  el.className = 'status ' + (cls || 'wait');
+}
+
+async function makeOffer(){
+  if(!sendFiles.length && !$('send-text').value.trim()){ toast(t('need_files')); return; }
+  var btn = $('btn-make-offer');
+  btn.disabled = true;
+  try{
+    if(sendPC) try{ sendPC.close(); }catch(e){}
+    sendPC = makePC();
+    sendDC = sendPC.createDataChannel('share');
+    sendDC.onopen = onSendOpen;
+    sendDC.onerror = function(){ setSendStatus(t('st_failed'), ''); };
+    var offer = await sendPC.createOffer();
+    await sendPC.setLocalDescription(offer);
+    await waitIce(sendPC);
+    var code = encCode(sendPC.localDescription);
+    $('offer-code').value = code;
+    $('offer-card').style.display = 'block';
+    var qr = $('qr'); qr.innerHTML = '';
+    try{ new QRCode(qr, { text: code, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M }); }
+    catch(e){ qr.innerHTML = '<p class="hint">QR</p>'; }
+    setSendStatus(t('st_waiting'), 'wait');
+    $('offer-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }catch(e){
+    toast(t('st_failed'));
+  }
+  btn.disabled = false;
+}
+
+async function connectSender(){
+  var code = $('answer-code').value;
+  if(!code.trim()){ toast(t('need_answer')); return; }
+  try{
+    var desc = decCode(code);
+    await sendPC.setRemoteDescription(desc);
+    setSendStatus(t('st_waiting'), 'wait');
+  }catch(e){ toast(t('bad_code')); }
+}
+
+var CHUNK = 16 * 1024;
+function onSendOpen(){
+  setSendStatus(t('st_connected'), 'ok');
+  (async function(){
+    try{
+      var text = $('send-text').value.trim();
+      if(text) sendDC.send(JSON.stringify({ t: 'text', content: text }));
+      var prog = $('send-progress');
+      prog.innerHTML = '';
+      for(var fi=0; fi<sendFiles.length; fi++){
+        var f = sendFiles[fi];
+        var id = 'f' + fi;
+        var row = document.createElement('div');
+        row.innerHTML = '<div class="file-row"><div><strong>'+esc(f.name)+'</strong></div><span class="meta">0%</span></div>' +
+          '<div class="progress"><div></div></div>';
+        prog.appendChild(row);
+        var bar = row.querySelector('.progress > div');
+        var pct = row.querySelector('.meta');
+        setSendStatus(t('st_sending') + ' (' + (fi+1) + '/' + sendFiles.length + ')', 'wait');
+        sendDC.send(JSON.stringify({ t: 'meta', id: id, name: f.name, size: f.size, mime: f.type || 'application/octet-stream' }));
+        var offset = 0;
+        while(offset < f.size){
+          while(sendDC.bufferedAmount > 1024*1024) await wait(60);
+          var slice = f.slice(offset, offset + CHUNK);
+          var buf = await slice.arrayBuffer();
+          sendDC.send(buf);
+          offset += buf.byteLength;
+          var p = Math.round(offset / f.size * 100);
+          bar.style.width = p + '%';
+          pct.textContent = p + '%';
+        }
+        sendDC.send(JSON.stringify({ t: 'done', id: id }));
+      }
+      setSendStatus(t('st_done'), 'ok');
+    }catch(e){
+      setSendStatus(t('st_failed'), '');
+    }
+  })();
+}
+
+/* ---------- 받기 ---------- */
+var recvPC = null, recvDC = null;
+var recvBuffers = {};
+var scanStream = null, scanTimer = null;
+
+function setRecvStatus(msg, cls){
+  var el = $('recv-status');
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent = msg || '';
+  el.className = 'status ' + (cls || 'wait');
+}
+
+async function makeAnswer(){
+  var code = $('offer-input').value;
+  if(!code.trim()){ toast(t('need_offer')); return; }
+  var btn = $('btn-make-answer');
+  btn.disabled = true;
+  try{
+    var desc = decCode(code);
+    if(recvPC) try{ recvPC.close(); }catch(e){}
+    recvPC = makePC();
+    recvPC.ondatachannel = function(e){
+      recvDC = e.channel;
+      wireReceiver(recvDC);
+    };
+    recvPC.onconnectionstatechange = function(){
+      if(recvPC.connectionState === 'failed') setRecvStatus(t('st_failed'), '');
+    };
+    await recvPC.setRemoteDescription(desc);
+    var answer = await recvPC.createAnswer();
+    await recvPC.setLocalDescription(answer);
+    await waitIce(recvPC);
+    $('answer-code-out').value = encCode(recvPC.localDescription);
+    $('answer-card').style.display = 'block';
+    setRecvStatus(t('st_waiting'), 'wait');
+    stopScan();
+    $('answer-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }catch(e){ toast(t('bad_code')); }
+  btn.disabled = false;
+}
+
+function wireReceiver(dc){
+  var list = $('recv-list');
+  dc.onmessage = function(e){
+    if(typeof e.data === 'string'){
+      var m;
+      try{ m = JSON.parse(e.data); }catch(err){ return; }
+      if(m.t === 'meta'){
+        recvBuffers[m.id] = { name: m.name, size: m.size, mime: m.mime, chunks: [], got: 0 };
+        setRecvStatus(t('st_receiving') + ' ' + m.name, 'wait');
+        var row = document.createElement('div');
+        row.id = 'r-' + m.id;
+        row.innerHTML = '<div class="file-row"><div><strong>'+esc(m.name)+'</strong><div class="meta">'+fmtSize(m.size)+'</div></div><span class="meta pct">0%</span></div>' +
+          '<div class="progress"><div></div></div>';
+        list.appendChild(row);
+      }else if(m.t === 'done'){
+        var b = recvBuffers[m.id];
+        if(!b) return;
+        var blob = new Blob(b.chunks, { type: b.mime });
+        var url = URL.createObjectURL(blob);
+        var rowEl = $('r-' + m.id);
+        if(rowEl){
+          rowEl.querySelector('.pct').innerHTML = '<a class="dl" href="'+url+'" download="'+esc(b.name)+'">'+esc(t('download'))+'</a>';
+          rowEl.querySelector('.progress > div').style.width = '100%';
+        }
+        delete recvBuffers[m.id];
+        setRecvStatus(t('st_done'), 'ok');
+      }else if(m.t === 'text'){
+        var div = document.createElement('div');
+        var ta = document.createElement('div');
+        ta.className = 'recv-text';
+        ta.textContent = m.content;
+        div.innerHTML = '<label class="lbl">'+esc(t('open_text'))+'</label>';
+        div.appendChild(ta);
+        var cp = document.createElement('button');
+        cp.className = 'btn';
+        cp.textContent = t('copy');
+        cp.onclick = function(){
+          var done = function(){ toast(t('copied_text')); };
+          if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(m.content).then(done, done);
+          else done();
+        };
+        div.appendChild(cp);
+        list.appendChild(div);
+      }
+    }else{
+      var ids = Object.keys(recvBuffers);
+      if(!ids.length) return;
+      var cur = recvBuffers[ids[ids.length-1]];
+      cur.chunks.push(e.data);
+      cur.got += e.data.byteLength || e.data.size || 0;
+      var r = $('r-' + ids[ids.length-1]);
+      if(r && cur.size){
+        var p = Math.min(99, Math.round(cur.got / cur.size * 100));
+        r.querySelector('.progress > div').style.width = p + '%';
+        r.querySelector('.pct').textContent = p + '%';
+      }
+    }
+  };
+}
+
+/* ---------- QR 스캔 ---------- */
+function loadJsQR(){
+  if(typeof jsQR !== 'undefined') return Promise.resolve();
+  return new Promise(function(res, rej){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+async function startScan(){
+  try{
+    await loadJsQR();
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    var v = $('scan-video');
+    v.style.display = 'block';
+    $('scan-row').style.display = 'flex';
+    v.srcObject = scanStream;
+    await v.play();
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    scanTimer = setInterval(function(){
+      if(!v.videoWidth) return;
+      canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+      ctx.drawImage(v, 0, 0);
+      var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var code = jsQR(img.data, canvas.width, canvas.height);
+      if(code && code.data){
+        $('offer-input').value = code.data;
+        toast(t('scan_found'));
+        stopScan();
+      }
+    }, 400);
+  }catch(e){ toast(t('scan_fail')); }
+}
+function stopScan(){
+  if(scanTimer){ clearInterval(scanTimer); scanTimer = null; }
+  if(scanStream){ scanStream.getTracks().forEach(function(tr){ tr.stop(); }); scanStream = null; }
+  $('scan-video').style.display = 'none';
+  $('scan-row').style.display = 'none';
+}
+
+/* ---------- 이벤트 ---------- */
+function copyText(id){
+  var el = $(id);
+  el.select();
+  var done = function(){ toast(t('copied')); };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(el.value).then(done, function(){ document.execCommand('copy'); done(); });
+    else { document.execCommand('copy'); done(); }
+  }catch(e){ done(); }
+}
+function wire(){
+  var uiBtns = $('ui-lang-seg').querySelectorAll('button');
+  for(var u=0;u<uiBtns.length;u++){
+    uiBtns[u].onclick = (function(b){ return function(){ setUiLang(b.getAttribute('data-ui-lang')); }; })(uiBtns[u]);
+  }
+  $('tab-send').onclick = function(){
+    $('tab-send').classList.add('on'); $('tab-recv').classList.remove('on');
+    $('panel-send').classList.add('on'); $('panel-recv').classList.remove('on');
+  };
+  $('tab-recv').onclick = function(){
+    $('tab-recv').classList.add('on'); $('tab-send').classList.remove('on');
+    $('panel-recv').classList.add('on'); $('panel-send').classList.remove('on');
+  };
+  $('send-files').addEventListener('change', function(e){
+    for(var i=0;i<e.target.files.length;i++) sendFiles.push(e.target.files[i]);
+    e.target.value = '';
+    renderSendList();
+  });
+  $('btn-make-offer').onclick = makeOffer;
+  $('btn-connect').onclick = connectSender;
+  $('btn-copy-offer').onclick = function(){ copyText('offer-code'); };
+  $('btn-copy-answer').onclick = function(){ copyText('answer-code-out'); };
+  $('btn-make-answer').onclick = makeAnswer;
+  $('btn-scan').onclick = startScan;
+  $('btn-scan-stop').onclick = stopScan;
+}
+
+loadUiLang();
+wire();
+setUiLang(uiLang);
+</script>
+</body>
+</html>
