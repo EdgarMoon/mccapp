@@ -11,6 +11,7 @@ h1 { font-size: 1.8rem; }
 .card { display: block; background: #fff; border-radius: 16px; padding: 20px 22px; margin: 14px 0; text-decoration: none; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 .card strong { font-size: 1.2rem; }
 .card p { color: #8a7f66; margin: 6px 0 0; }
+.card .tag { display: inline-block; font-size: .75rem; color: #fff; background: #2b2118; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle; }
 .lang { text-align: right; margin-bottom: 12px; }
 .lang button { border: 1px solid #ddd; background: #fff; border-radius: 999px; padding: 6px 14px; margin-left: 6px; cursor: pointer; font-size: .85rem; }
 .lang button.on { background: #2b2118; color: #fff; border-color: #2b2118; }
@@ -23,34 +24,43 @@ h1 { font-size: 1.8rem; }
   </div>
   <h1 id="title">우리집 앱</h1>
   <a class="card" href="/dictation/">
-    <strong id="app1t">받아쓰기 연습</strong>
-    <p id="app1d">프랑스어·영어 받아쓰기 연습 앱</p>
+    <strong id="app1t">받아쓰기 연습</strong><span class="tag" id="app1tag">구버전</span>
+    <p id="app1d">프랑스어·영어 받아쓰기 연습 앱 (이 기기에 저장)</p>
+  </a>
+  <a class="card" href="https://dictation-mccapps.vercel.app">
+    <strong id="app2t">받아쓰기 연습 v2</strong><span class="tag" id="app2tag">신버전</span>
+    <p id="app2d">프랑스어·영어 받아쓰기 연습 앱 (서버 저장, 모든 기기 공유)</p>
   </a>
   <a class="card" href="/paste/">
-    <strong id="app2t">텍스트 공유</strong>
-    <p id="app2d">붙여넣고 링크로 공유하기</p>
+    <strong id="app3t">텍스트 공유</strong>
+    <p id="app3d">붙여넣고 링크로 공유하기</p>
   </a>
 </div>
 <script>
 var S = {
   ko: { title: '우리집 앱',
-    app1t: '받아쓰기 연습', app1d: '프랑스어·영어 받아쓰기 연습 앱',
-    app2t: '텍스트 공유', app2d: '붙여넣고 링크로 공유하기' },
+    app1t: '받아쓰기 연습', app1tag: '구버전', app1d: '프랑스어·영어 받아쓰기 연습 앱 (이 기기에 저장)',
+    app2t: '받아쓰기 연습 v2', app2tag: '신버전', app2d: '프랑스어·영어 받아쓰기 연습 앱 (서버 저장, 모든 기기 공유)',
+    app3t: '텍스트 공유', app3d: '붙여넣고 링크로 공유하기' },
   en: { title: 'Our Apps',
-    app1t: 'Dictation Practice', app1d: 'French & English dictation practice app',
-    app2t: 'Text Share', app2d: 'Paste and share via link' },
+    app1t: 'Dictation Practice', app1tag: 'classic', app1d: 'French & English dictation practice app (saved on this device)',
+    app2t: 'Dictation Practice v2', app2tag: 'new', app2d: 'French & English dictation practice app (server-saved, shared across devices)',
+    app3t: 'Text Share', app3d: 'Paste and share via link' },
   fr: { title: 'Nos applis',
-    app1t: 'Pratique de dictée', app1d: 'Appli de dictée en français et en anglais',
-    app2t: 'Partage de texte', app2d: 'Collez et partagez par lien' }
+    app1t: 'Pratique de dictée', app1tag: 'classique', app1d: 'Appli de dictée en français et en anglais (enregistrée sur cet appareil)',
+    app2t: 'Pratique de dictée v2', app2tag: 'nouveau', app2d: 'Appli de dictée en français et en anglais (serveur, partagée entre appareils)',
+    app3t: 'Partage de texte', app3d: 'Collez et partagez par lien' }
 };
 function setL(l) {
   try { localStorage.setItem('mcc-ui-lang', l); } catch(e) {}
   document.querySelectorAll('.lang button').forEach(function(b){ b.classList.toggle('on', b.dataset.l === l); });
   document.getElementById('title').textContent = S[l].title;
-  document.getElementById('app1t').textContent = S[l].app1t;
-  document.getElementById('app1d').textContent = S[l].app1d;
-  document.getElementById('app2t').textContent = S[l].app2t;
-  document.getElementById('app2d').textContent = S[l].app2d;
+  ['1','2','3'].forEach(function(n){
+    document.getElementById('app'+n+'t').textContent = S[l]['app'+n+'t'];
+    document.getElementById('app'+n+'d').textContent = S[l]['app'+n+'d'];
+    var tag = document.getElementById('app'+n+'tag');
+    if (tag) tag.textContent = S[l]['app'+n+'tag'];
+  });
   document.documentElement.lang = l;
 }
 document.querySelectorAll('.lang button').forEach(function(b){ b.onclick = function(){ setL(b.dataset.l); }; });
