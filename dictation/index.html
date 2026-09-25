@@ -54,14 +54,14 @@ textarea { line-height: 1.8; resize: vertical; }
 </head>
 <body>
 <div id="app">
+  <div class="lang-switch"><div class="seg" id="ui-lang-seg">
+    <button type="button" data-ui-lang="ko" class="on">한국어</button>
+    <button type="button" data-ui-lang="en">English</button>
+    <button type="button" data-ui-lang="fr">Français</button>
+  </div></div>
 
   <!-- 홈 -->
   <section id="screen-home" class="screen active">
-    <div class="lang-switch"><div class="seg" id="ui-lang-seg">
-      <button type="button" data-ui-lang="ko" class="on">한국어</button>
-      <button type="button" data-ui-lang="en">English</button>
-      <button type="button" data-ui-lang="fr">Français</button>
-    </div></div>
     <h1 data-i18n="home_title">이번 주 받아쓰기</h1>
     <p class="subtitle" data-i18n="home_sub">단어를 넣으면 또렷하게 읽어줘요.<br>아이는 종이에 쓰기만 하면 돼요.</p>
     <div class="row">
