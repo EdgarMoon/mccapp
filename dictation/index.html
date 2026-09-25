@@ -351,29 +351,12 @@ function pickVoice(lang){
   }catch(e){}
   return null;
 }
-/* ---------- TTS 읽기용 텍스트 가공 ----------
-   괄호 안 주석((n.f.), (v.) 등)은 읽지 않고,
-   불어 명사 성별 표기가 있으면 관사(le/la/l'/les)를 붙여서 읽는다. */
-function ttsText(text, lang){
-  var s = String(text || ''), gender = null, plural = false;
-  s = s.replace(/\(([^()]*)\)/g, function(m, inner){
-    var gm = /(?:^|\s)(?:n\.?)?\s*([mf])\b/i.exec(inner);
-    if(gm){ gender = gm[1].toLowerCase(); if(/pl\.?/i.test(inner)) plural = true; }
-    return '';
-  }).replace(/\s{2,}/g, ' ').trim();
-  if(lang === 'fr' && gender && s && !/^(le|la|les|un|une|des|du)\b|^l'|^d'/i.test(s)){
-    var art = plural ? 'les'
-      : (/^[aeiouyàâéèêëîïôûüh]/i.test(s) ? "l'" : (gender === 'm' ? 'le' : 'la'));
-    s = (art === "l'") ? "l'" + s : art + ' ' + s;
-  }
-  return s;
-}
 function speakOnce(text, lang, rate){
   return new Promise(function(resolve){
     var done = false;
     var fin = function(){ if(!done){ done = true; resolve(); } };
     try{
-      var u = new SpeechSynthesisUtterance(ttsText(text, lang));
+      var u = new SpeechSynthesisUtterance(text);
       u.lang = (lang === 'fr') ? 'fr-FR' : 'en-US';
       u.rate = rate || 0.9;
       var v = pickVoice(lang);
