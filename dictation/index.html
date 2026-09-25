@@ -127,6 +127,16 @@ textarea { line-height: 1.8; resize: vertical; }
           <option value="test" data-i18n="mode_test">전체 시험</option>
         </select>
       </label>
+      <label><span data-i18n="ed_autonext">자동 넘기기</span><br>
+        <input type="checkbox" id="set-autonext" style="width:22px;height:22px;margin-top:8px;accent-color:#2b2118;">
+      </label>
+      <label><span data-i18n="ed_autonext_delay">대기 시간</span>
+        <select id="set-autonext-delay" disabled>
+          <option value="3000" data-i18n="sec_3">3초</option>
+          <option value="4000" data-i18n="sec_4" selected>4초</option>
+          <option value="5000" data-i18n="sec_5">5초</option>
+        </select>
+      </label>
     </div>
     <div class="row">
       <button id="btn-save-list" class="btn" data-i18n="ed_save">저장</button>
@@ -168,16 +178,18 @@ ko: {
   ed_hint: '쉼표(,)나 세미콜론(;)으로 이어 붙여도 각각 나눠서 읽어요. 문장은 한 줄에 하나씩 넣으면 통째로 읽어줘요.',
   ed_settings: '연습 설정', ed_repeats: '반복 횟수', ed_rate: '읽기 속도', ed_gap: '단어 간격',
   ed_order: '순서', ed_mode: '연습 방식', ed_save: '저장', ed_start: '연습 시작',
+  ed_autonext: '자동 넘기기', ed_autonext_delay: '대기 시간',
   ed_share: '다른 기기로 보내기', ed_make_code: '연습 코드 만들기·복사', ed_import_code: '코드로 가져오기',
   ed_code_ph: "연습 코드가 여기에 표시돼요. 가져올 때는 받은 코드를 여기에 붙여넣고 '코드로 가져오기'를 누르세요.",
   times_1: '1번', times_2: '2번', times_3: '3번', times_4: '4번', times_5: '5번',
   rate_slow: '느리게', rate_normal: '보통', rate_fast: '빠르게',
-  sec_1: '1초', sec_2: '2초', sec_3: '3초',
+  sec_1: '1초', sec_2: '2초', sec_3: '3초', sec_4: '4초', sec_5: '5초',
   order_seq: '순서대로', order_shuffle: '무작위',
   mode_practice: '단어별 연습', mode_test: '전체 시험',
   count_suffix: '개',
   practice_btn: '연습', edit_btn: '편집', del_btn: '삭제',
   listen_note: '잘 듣고 종이에 쓰세요',
+  autonext_note: function(s){ return '⏱ ' + s + '초 후 자동으로 넘어가요'; },
   reveal: '정답 보기', hide: '정답 숨기기', next_word: '다음 단어 →', finish: '마치기 ✓',
   test_note: '처음부터 끝까지 읽어줄게요.<br>잘 듣고 종이에 쓰세요.',
   stop_listen: '⏹ 그만 듣기',
@@ -207,16 +219,18 @@ en: {
   ed_hint: 'You can join with commas (,) or semicolons (;) — each will be read separately. Put one sentence per line to read it whole.',
   ed_settings: 'Practice Settings', ed_repeats: 'Repetitions', ed_rate: 'Reading Speed', ed_gap: 'Word Gap',
   ed_order: 'Order', ed_mode: 'Practice Mode', ed_save: 'Save', ed_start: 'Start Practice',
+  ed_autonext: 'Auto-advance', ed_autonext_delay: 'Wait time',
   ed_share: 'Send to Another Device', ed_make_code: 'Create & Copy Practice Code', ed_import_code: 'Import from Code',
   ed_code_ph: "The practice code appears here. To import, paste the code here and press 'Import from Code'.",
   times_1: '1 time', times_2: '2 times', times_3: '3 times', times_4: '4 times', times_5: '5 times',
   rate_slow: 'Slow', rate_normal: 'Normal', rate_fast: 'Fast',
-  sec_1: '1 sec', sec_2: '2 sec', sec_3: '3 sec',
+  sec_1: '1 sec', sec_2: '2 sec', sec_3: '3 sec', sec_4: '4 sec', sec_5: '5 sec',
   order_seq: 'In order', order_shuffle: 'Shuffle',
   mode_practice: 'Word by word', mode_test: 'Full test',
   count_suffix: '',
   practice_btn: 'Practice', edit_btn: 'Edit', del_btn: 'Delete',
   listen_note: 'Listen carefully and write on paper',
+  autonext_note: function(s){ return '⏱ Auto-advancing in ' + s + ' sec'; },
   reveal: 'Show Answer', hide: 'Hide Answer', next_word: 'Next Word →', finish: 'Finish ✓',
   test_note: "I'll read from start to finish.<br>Listen carefully and write on paper.",
   stop_listen: '⏹ Stop Listening',
@@ -246,16 +260,18 @@ fr: {
   ed_hint: 'Vous pouvez joindre avec des virgules (,) ou des points-virgules (;) — chacun sera lu séparément. Mettez une phrase par ligne pour la lire en entier.',
   ed_settings: 'Réglages', ed_repeats: 'Répétitions', ed_rate: 'Vitesse de lecture', ed_gap: 'Pause entre mots',
   ed_order: 'Ordre', ed_mode: 'Mode', ed_save: 'Enregistrer', ed_start: 'Commencer',
+  ed_autonext: 'Avance auto', ed_autonext_delay: "Temps d'attente",
   ed_share: 'Envoyer vers un autre appareil', ed_make_code: 'Créer et copier le code', ed_import_code: 'Importer depuis un code',
   ed_code_ph: "Le code s’affiche ici. Pour importer, collez le code ici puis appuyez sur « Importer depuis un code ».",
   times_1: '1 fois', times_2: '2 fois', times_3: '3 fois', times_4: '4 fois', times_5: '5 fois',
   rate_slow: 'Lent', rate_normal: 'Normal', rate_fast: 'Rapide',
-  sec_1: '1 s', sec_2: '2 s', sec_3: '3 s',
+  sec_1: '1 s', sec_2: '2 s', sec_3: '3 s', sec_4: '4 s', sec_5: '5 s',
   order_seq: 'Dans l’ordre', order_shuffle: 'Aléatoire',
   mode_practice: 'Mot à mot', mode_test: 'Test complet',
   count_suffix: '',
   practice_btn: 'Pratiquer', edit_btn: 'Modifier', del_btn: 'Supprimer',
   listen_note: 'Écoutez bien et écrivez sur papier',
+  autonext_note: function(s){ return '⏱ Avance auto dans ' + s + ' s'; },
   reveal: 'Voir la réponse', hide: 'Cacher la réponse', next_word: 'Mot suivant →', finish: 'Terminer ✓',
   test_note: 'Je vais lire du début à la fin.<br>Écoutez bien et écrivez sur papier.',
   stop_listen: '⏹ Arrêter l’écoute',
@@ -467,7 +483,9 @@ function editorConfig(){
     rate: parseFloat($('set-rate').value),
     gap: parseInt($('set-gap').value, 10),
     order: $('set-order').value,
-    mode: $('set-mode').value
+    mode: $('set-mode').value,
+    autonext: $('set-autonext').checked,
+    autonextDelay: parseInt($('set-autonext-delay').value, 10)
   };
 }
 function fillEditor(cfg){
@@ -479,6 +497,9 @@ function fillEditor(cfg){
   if(cfg.gap) $('set-gap').value = String(cfg.gap);
   if(cfg.order) $('set-order').value = cfg.order;
   if(cfg.mode) $('set-mode').value = cfg.mode;
+  $('set-autonext').checked = !!cfg.autonext;
+  $('set-autonext-delay').disabled = !cfg.autonext;
+  if(cfg.autonextDelay) $('set-autonext-delay').value = String(cfg.autonextDelay);
   updateCount();
 }
 function loadIntoEditor(L){
@@ -560,7 +581,8 @@ function setProgress(i, n){
 }
 function startWithList(L){
   startPractice({ v:1, name:L.name, lang:L.lang, words:L.words.slice(),
-    repeats:L.repeats||2, rate:L.rate||0.9, gap:L.gap||2000, order:L.order||'seq', mode:L.mode||'practice' });
+    repeats:L.repeats||2, rate:L.rate||0.9, gap:L.gap||2000, order:L.order||'seq', mode:L.mode||'practice',
+    autonext: !!L.autonext, autonextDelay: L.autonextDelay || 4000 });
 }
 function startPractice(cfg){
   if(!cfg.words.length){ toast(t('t_need_words')); return; }
@@ -585,11 +607,23 @@ function runWordMode(cfg){
       '<div class="row" style="justify-content:center">' +
       '<button class="btn" id="btn-reveal">' + esc(t('reveal')) + '</button>' +
       '<button class="btn primary" id="btn-next">' + esc(i+1 < order.length ? t('next_word') : t('finish')) + '</button>' +
-      '</div>';
+      '</div>' +
+      (cfg.autonext ? '<p class="hint center">' + esc(t('autonext_note')(Math.round(cfg.autonextDelay/1000))) + '</p>' : '');
     var wordMy = ++runId;
     my = wordMy;
-    playWord(order[i], cfg, wordMy);
-    $('btn-replay').onclick = function(){ var m = ++runId; my = m; playWord(order[i], cfg, m); };
+    function playThenMaybeAdvance(token){
+      (async function(){
+        await playWord(order[i], cfg, token);
+        if(token !== runId) return;
+        if(!cfg.autonext) return;
+        await wait(cfg.autonextDelay);
+        if(token !== runId) return;
+        var nb = $('btn-next');
+        if(nb) nb.click();
+      })();
+    }
+    playThenMaybeAdvance(wordMy);
+    $('btn-replay').onclick = function(){ var m = ++runId; my = m; playThenMaybeAdvance(m); };
     $('btn-reveal').onclick = function(){
       var a = $('answer');
       if(a.style.display === 'none'){ a.textContent = order[i]; a.style.display = 'block'; $('btn-reveal').textContent = t('hide'); }
@@ -669,6 +703,9 @@ function wire(){
     segBtns[s].onclick = (function(b){ return function(){ setEditorLang(b.getAttribute('data-lang')); }; })(segBtns[s]);
   }
   $('words-input').addEventListener('input', updateCount);
+  $('set-autonext').onchange = function(){
+    $('set-autonext-delay').disabled = !this.checked;
+  };
   $('btn-save-list').onclick = saveCurrentList;
   $('btn-start-practice').onclick = function(){
     var L = saveCurrentList();
