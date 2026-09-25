@@ -26,22 +26,22 @@ h1 { font-size: 1.8rem; }
     <strong id="app1t">받아쓰기 연습</strong>
     <p id="app1d">프랑스어·영어 받아쓰기 연습 앱</p>
   </a>
-  <a class="card" href="/share/">
-    <strong id="app2t">파일 공유</strong>
-    <p id="app2d">기기끼리 사진·파일 바로 주고받기</p>
+  <a class="card" href="/paste/">
+    <strong id="app2t">텍스트 공유</strong>
+    <p id="app2d">붙여넣고 링크로 공유하기</p>
   </a>
 </div>
 <script>
 var S = {
   ko: { title: '우리집 앱',
     app1t: '받아쓰기 연습', app1d: '프랑스어·영어 받아쓰기 연습 앱',
-    app2t: '파일 공유', app2d: '기기끼리 사진·파일 바로 주고받기' },
+    app2t: '텍스트 공유', app2d: '붙여넣고 링크로 공유하기' },
   en: { title: 'Our Apps',
     app1t: 'Dictation Practice', app1d: 'French & English dictation practice app',
-    app2t: 'File Share', app2d: 'Send photos & files directly between devices' },
+    app2t: 'Text Share', app2d: 'Paste and share via link' },
   fr: { title: 'Nos applis',
     app1t: 'Pratique de dictée', app1d: 'Appli de dictée en français et en anglais',
-    app2t: 'Partage de fichiers', app2d: 'Envoyez photos et fichiers entre appareils' }
+    app2t: 'Partage de texte', app2d: 'Collez et partagez par lien' }
 };
 function setL(l) {
   try { localStorage.setItem('mcc-ui-lang', l); } catch(e) {}
