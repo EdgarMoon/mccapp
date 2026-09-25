@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCC Apps</title>
+<style>
+body { margin: 0; font-family: -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; background: #f7f1e1; color: #333; }
+#app { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
+h1 { font-size: 1.8rem; }
+.card { display: block; background: #fff; border-radius: 16px; padding: 20px 22px; margin: 14px 0; text-decoration: none; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.card strong { font-size: 1.2rem; }
+.card p { color: #8a7f66; margin: 6px 0 0; }
+.lang { text-align: right; margin-bottom: 12px; }
+.lang button { border: 1px solid #ddd; background: #fff; border-radius: 999px; padding: 6px 14px; margin-left: 6px; cursor: pointer; font-size: .85rem; }
+.lang button.on { background: #2b2118; color: #fff; border-color: #2b2118; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="lang">
+    <button data-l="ko" class="on">한국어</button><button data-l="en">English</button><button data-l="fr">Français</button>
+  </div>
+  <h1 id="title">우리집 앱</h1>
+  <a class="card" href="/dictation/">
+    <strong id="app1t">받아쓰기 연습</strong>
+    <p id="app1d">프랑스어·영어 받아쓰기 연습 앱</p>
+  </a>
+</div>
+<script>
+var S = {
+  ko: { title: '우리집 앱', app1t: '받아쓰기 연습', app1d: '프랑스어·영어 받아쓰기 연습 앱' },
+  en: { title: 'Our Apps', app1t: 'Dictation Practice', app1d: 'French & English dictation practice app' },
+  fr: { title: 'Nos applis', app1t: 'Pratique de dictée', app1d: 'Appli de dictée en français et en anglais' }
+};
+function setL(l) {
+  try { localStorage.setItem('mcc-ui-lang', l); } catch(e) {}
+  document.querySelectorAll('.lang button').forEach(function(b){ b.classList.toggle('on', b.dataset.l === l); });
+  document.getElementById('title').textContent = S[l].title;
+  document.getElementById('app1t').textContent = S[l].app1t;
+  document.getElementById('app1d').textContent = S[l].app1d;
+  document.documentElement.lang = l;
+}
+document.querySelectorAll('.lang button').forEach(function(b){ b.onclick = function(){ setL(b.dataset.l); }; });
+var saved = 'ko';
+try { saved = localStorage.getItem('mcc-ui-lang') || 'ko'; } catch(e) {}
+if (!S[saved]) saved = 'ko';
+setL(saved);
+</script>
+</body>
+</html>
