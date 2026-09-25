@@ -47,14 +47,17 @@ textarea { line-height: 1.8; resize: vertical; }
 #toast.show { opacity: 1; }
 .pencil { font-size: 2.6rem; }
 .listen-note { text-align: center; color: #8a7f66; font-size: 1.1rem; margin-top: 8px; }
-.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.lang-switch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.home-link { text-decoration: none; color: #8a7f66; font-size: .9rem; font-weight: 700; padding: 8px 4px; }
 .lang-switch .seg { max-width: 280px; }
 .lang-switch .seg button { padding: 8px 12px; font-size: .85rem; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="lang-switch"><div class="seg" id="ui-lang-seg">
+  <div class="lang-switch">
+    <a class="home-link" href="/" data-i18n="home_link">🏠 홈</a>
+    <div class="seg" id="ui-lang-seg">
     <button type="button" data-ui-lang="ko" class="on">한국어</button>
     <button type="button" data-ui-lang="en">English</button>
     <button type="button" data-ui-lang="fr">Français</button>
@@ -168,6 +171,7 @@ var wait = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); 
 /* ---------- 다국어 ---------- */
 var I18N = {
 ko: {
+  home_link: '🏠 홈',
   home_title: '이번 주 받아쓰기',
   home_sub: '단어를 넣으면 또렷하게 읽어줘요.<br>아이는 종이에 쓰기만 하면 돼요.',
   home_make: '목록 만들기', home_practice: '연습하기', home_saved: '저장된 목록',
@@ -209,6 +213,7 @@ ko: {
   title: '받아쓰기 연습'
 },
 en: {
+  home_link: '🏠 Home',
   home_title: "This Week's Dictation",
   home_sub: 'Enter words and they will be read aloud clearly.<br>The child just writes on paper.',
   home_make: 'Create List', home_practice: 'Practice', home_saved: 'Saved Lists',
@@ -250,6 +255,7 @@ en: {
   title: 'Dictation Practice'
 },
 fr: {
+  home_link: '🏠 Accueil',
   home_title: 'Dictée de la semaine',
   home_sub: 'Entrez des mots et ils seront lus à voix haute.<br>L’enfant écrit simplement sur papier.',
   home_make: 'Créer une liste', home_practice: 'Pratiquer', home_saved: 'Listes enregistrées',
