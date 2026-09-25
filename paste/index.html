@@ -9,7 +9,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; background: #f7f1e1; color: #333; }
 #app { max-width: 700px; margin: 0 auto; padding: 24px 20px 60px; }
-.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.lang-switch { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.home-link { text-decoration: none; color: #8a7f66; font-size: .9rem; font-weight: 700; padding: 8px 4px; }
 .seg { display: flex; background: #e7ddc4; border-radius: 999px; padding: 3px; }
 .seg button { border: none; background: transparent; border-radius: 999px; padding: 8px 14px; font-size: .85rem; cursor: pointer; color: #666; }
 .seg button.on { background: #2b2118; color: #fff; }
@@ -34,7 +35,9 @@ textarea.link { width: 100%; border: 2px solid #e7ddc4; border-radius: 12px; pad
 </head>
 <body>
 <div id="app">
-  <div class="lang-switch"><div class="seg" id="ui-lang-seg">
+  <div class="lang-switch">
+    <a class="home-link" href="/" data-i18n="home_link">🏠 홈</a>
+    <div class="seg" id="ui-lang-seg">
     <button type="button" data-ui-lang="ko" class="on">한국어</button>
     <button type="button" data-ui-lang="en">English</button>
     <button type="button" data-ui-lang="fr">Français</button>
@@ -84,6 +87,7 @@ var $ = function(id){ return document.getElementById(id); };
 
 var I18N = {
 ko: {
+  home_link: '🏠 홈',
   title: '텍스트 공유',
   subtitle: '붙여넣고 링크를 공유하세요.<br>서버에 저장되지 않고 링크 안에 담겨요.',
   make_label: '공유할 텍스트', make_ph: '받아쓰기 코드, 메모, 링크 등을 붙여넣으세요',
@@ -95,6 +99,7 @@ ko: {
   bad_link: '링크를 읽지 못했어요.'
 },
 en: {
+  home_link: '🏠 Home',
   title: 'Text Share',
   subtitle: 'Paste and share the link.<br>Nothing is stored on a server — it lives inside the link.',
   make_label: 'Text to share', make_ph: 'Paste a dictation code, memo, link, etc.',
@@ -106,6 +111,7 @@ en: {
   bad_link: 'Couldn\'t read the link.'
 },
 fr: {
+  home_link: '🏠 Accueil',
   title: 'Partage de texte',
   subtitle: 'Collez et partagez le lien.<br>Rien n’est stocké sur un serveur — tout est dans le lien.',
   make_label: 'Texte à partager', make_ph: 'Collez un code de dictée, un mémo, un lien, etc.',
