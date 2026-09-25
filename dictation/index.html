@@ -351,12 +351,16 @@ function pickVoice(lang){
   }catch(e){}
   return null;
 }
+/* TTS: 괄호 안 주석((n.f.) 등)은 읽지 않고 단어만 읽는다 */
+function ttsText(text){
+  return String(text || '').replace(/\([^()]*\)/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
 function speakOnce(text, lang, rate){
   return new Promise(function(resolve){
     var done = false;
     var fin = function(){ if(!done){ done = true; resolve(); } };
     try{
-      var u = new SpeechSynthesisUtterance(text);
+      var u = new SpeechSynthesisUtterance(ttsText(text));
       u.lang = (lang === 'fr') ? 'fr-FR' : 'en-US';
       u.rate = rate || 0.9;
       var v = pickVoice(lang);
