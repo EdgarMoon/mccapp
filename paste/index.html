@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>텍스트 공유</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; background: #f7f1e1; color: #333; }
+#app { max-width: 700px; margin: 0 auto; padding: 24px 20px 60px; }
+.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.seg { display: flex; background: #e7ddc4; border-radius: 999px; padding: 3px; }
+.seg button { border: none; background: transparent; border-radius: 999px; padding: 8px 14px; font-size: .85rem; cursor: pointer; color: #666; }
+.seg button.on { background: #2b2118; color: #fff; }
+h1 { font-size: 1.7rem; margin: 8px 0 4px; }
+.subtitle { color: #8a7f66; margin: 0 0 20px; line-height: 1.6; }
+.card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.lbl { display: block; font-weight: 700; margin: 0 0 8px; }
+.hint { color: #aaa; font-size: .85rem; margin: 8px 0 0; line-height: 1.6; }
+.center { text-align: center; }
+textarea.text { width: 100%; border: 2px solid #e7ddc4; border-radius: 12px; padding: 12px; font-size: .95rem; background: #fdfaf2; resize: vertical; font-family: inherit; }
+textarea.link { width: 100%; border: 2px solid #e7ddc4; border-radius: 12px; padding: 12px; font-size: .8rem; font-family: monospace; background: #fdfaf2; resize: none; }
+.btn { border: 2px solid #e7ddc4; background: #fff; border-radius: 12px; padding: 12px 20px; font-size: 1rem; font-weight: 700; cursor: pointer; color: #333; }
+.btn.primary { background: #2b2118; border-color: #2b2118; color: #fff; }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+#qr { display: flex; justify-content: center; margin: 16px 0; }
+#qr img, #qr canvas { border: 8px solid #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.view-text { background: #fdfaf2; border: 2px solid #e7ddc4; border-radius: 12px; padding: 14px; white-space: pre-wrap; word-break: break-all; font-size: 1rem; line-height: 1.6; }
+#toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #2b2118; color: #fff; padding: 12px 22px; border-radius: 999px; font-size: .95rem; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; z-index: 50; }
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="lang-switch"><div class="seg" id="ui-lang-seg">
+    <button type="button" data-ui-lang="ko" class="on">한국어</button>
+    <button type="button" data-ui-lang="en">English</button>
+    <button type="button" data-ui-lang="fr">Français</button>
+  </div></div>
+
+  <h1 data-i18n="title">텍스트 공유</h1>
+  <p class="subtitle" data-i18n="subtitle">붙여넣고 링크를 공유하세요.<br>서버에 저장되지 않고 링크 안에 담겨요.</p>
+
+  <!-- 만들기 -->
+  <section id="panel-make">
+    <div class="card">
+      <label class="lbl" data-i18n="make_label">공유할 텍스트</label>
+      <textarea id="paste-input" class="text" rows="8" data-i18n-ph="make_ph" placeholder="받아쓰기 코드, 메모, 링크 등을 붙여넣으세요"></textarea>
+      <div class="row">
+        <button id="btn-make" class="btn primary" data-i18n="make_btn">공유 링크 만들기</button>
+      </div>
+    </div>
+    <div class="card" id="link-card" style="display:none">
+      <label class="lbl" data-i18n="link_label">공유 링크</label>
+      <div id="qr"></div>
+      <textarea id="link-out" class="link" rows="3" readonly></textarea>
+      <div class="row">
+        <button id="btn-copy-link" class="btn" data-i18n="copy">복사</button>
+        <a id="btn-open-link" class="btn" href="#" target="_blank" data-i18n="open">열어보기</a>
+      </div>
+      <p class="hint" data-i18n="link_hint">이 링크를 공유하세요. 텍스트가 링크 안에 들어 있어서 서버에 남지 않아요.</p>
+    </div>
+  </section>
+
+  <!-- 보기 -->
+  <section id="panel-view" style="display:none">
+    <div class="card">
+      <label class="lbl" data-i18n="view_label">받은 텍스트</label>
+      <div id="view-text" class="view-text"></div>
+      <div class="row">
+        <button id="btn-copy-text" class="btn primary" data-i18n="copy">복사</button>
+        <button id="btn-new" class="btn" data-i18n="new">새로 만들기</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+
+var I18N = {
+ko: {
+  title: '텍스트 공유',
+  subtitle: '붙여넣고 링크를 공유하세요.<br>서버에 저장되지 않고 링크 안에 담겨요.',
+  make_label: '공유할 텍스트', make_ph: '받아쓰기 코드, 메모, 링크 등을 붙여넣으세요',
+  make_btn: '공유 링크 만들기',
+  link_label: '공유 링크', copy: '복사', copied: '복사됐어요.', open: '열어보기',
+  link_hint: '이 링크를 공유하세요. 텍스트가 링크 안에 들어 있어서 서버에 남지 않아요.',
+  view_label: '받은 텍스트', new: '새로 만들기',
+  need_text: '텍스트를 먼저 입력하세요.',
+  bad_link: '링크를 읽지 못했어요.'
+},
+en: {
+  title: 'Text Share',
+  subtitle: 'Paste and share the link.<br>Nothing is stored on a server — it lives inside the link.',
+  make_label: 'Text to share', make_ph: 'Paste a dictation code, memo, link, etc.',
+  make_btn: 'Create share link',
+  link_label: 'Share link', copy: 'Copy', copied: 'Copied.', open: 'Open',
+  link_hint: 'Share this link. The text is inside the link itself, nothing stays on a server.',
+  view_label: 'Received text', new: 'New',
+  need_text: 'Enter text first.',
+  bad_link: 'Couldn\'t read the link.'
+},
+fr: {
+  title: 'Partage de texte',
+  subtitle: 'Collez et partagez le lien.<br>Rien n’est stocké sur un serveur — tout est dans le lien.',
+  make_label: 'Texte à partager', make_ph: 'Collez un code de dictée, un mémo, un lien, etc.',
+  make_btn: 'Créer le lien',
+  link_label: 'Lien de partage', copy: 'Copier', copied: 'Copié.', open: 'Ouvrir',
+  link_hint: 'Partagez ce lien. Le texte est contenu dans le lien lui-même, rien ne reste sur un serveur.',
+  view_label: 'Texte reçu', new: 'Nouveau',
+  need_text: 'Saisissez d’abord du texte.',
+  bad_link: 'Lien illisible.'
+}};
+var uiLang = 'ko';
+function t(k){ var v = (I18N[uiLang]||I18N.ko)[k]; return (v===undefined)?k:v; }
+function toast(msg){
+  var el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+function setUiLang(l){
+  if(!I18N[l]) l = 'ko';
+  uiLang = l;
+  try{ localStorage.setItem('mcc-ui-lang', l); }catch(e){}
+  document.documentElement.lang = l;
+  var btns = $('ui-lang-seg').querySelectorAll('button');
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-ui-lang')===l);
+  var els = document.querySelectorAll('[data-i18n]');
+  for(var j=0;j<els.length;j++){
+    var v = t(els[j].getAttribute('data-i18n'));
+    if(typeof v === 'string') els[j].innerHTML = v;
+  }
+  var phs = document.querySelectorAll('[data-i18n-ph]');
+  for(var k=0;k<phs.length;k++){
+    var pv = t(phs[k].getAttribute('data-i18n-ph'));
+    if(typeof pv === 'string') phs[k].setAttribute('placeholder', pv);
+  }
+  document.title = t('title');
+}
+function loadUiLang(){
+  var l = 'ko';
+  try{ l = localStorage.getItem('mcc-ui-lang') || 'ko'; }catch(e){}
+  uiLang = I18N[l] ? l : 'ko';
+}
+function encText(s){
+  var bin = unescape(encodeURIComponent(s));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decText(code){
+  var s = String(code).replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length % 4) s += '=';
+  return decodeURIComponent(escape(atob(s)));
+}
+function copyStr(s, msg){
+  var done = function(){ toast(msg || t('copied')); };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, function(){ fallback(); });
+    else fallback();
+  }catch(e){ fallback(); }
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e2){}
+    document.body.removeChild(ta); done();
+  }
+}
+function showView(text){
+  $('panel-make').style.display = 'none';
+  $('panel-view').style.display = 'block';
+  $('view-text').textContent = text;
+  window.scrollTo(0,0);
+}
+function showMake(){
+  try{ history.replaceState(null, '', location.pathname); }catch(e){}
+  $('panel-view').style.display = 'none';
+  $('panel-make').style.display = 'block';
+  $('link-card').style.display = 'none';
+  $('paste-input').value = '';
+}
+function wire(){
+  var uiBtns = $('ui-lang-seg').querySelectorAll('button');
+  for(var u=0;u<uiBtns.length;u++){
+    uiBtns[u].onclick = (function(b){ return function(){ setUiLang(b.getAttribute('data-ui-lang')); }; })(uiBtns[u]);
+  }
+  $('btn-make').onclick = function(){
+    var text = $('paste-input').value;
+    if(!text.trim()){ toast(t('need_text')); return; }
+    var link = location.origin + location.pathname + '#' + encText(text);
+    $('link-out').value = link;
+    $('btn-open-link').href = link;
+    $('link-card').style.display = 'block';
+    var qr = $('qr'); qr.innerHTML = '';
+    try{ new QRCode(qr, { text: link, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); }
+    catch(e){}
+    $('link-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('btn-copy-link').onclick = function(){ copyStr($('link-out').value); };
+  $('btn-copy-text').onclick = function(){ copyStr($('view-text').textContent); };
+  $('btn-new').onclick = showMake;
+}
+
+loadUiLang();
+wire();
+setUiLang(uiLang);
+(function(){
+  var h = location.hash ? location.hash.slice(1) : '';
+  if(!h) return;
+  try{
+    var text = decText(h);
+    if(text) showView(text);
+    else toast(t('bad_link'));
+  }catch(e){ toast(t('bad_link')); }
+})();
+</script>
+</body>
+</html>
