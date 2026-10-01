@@ -7,7 +7,7 @@ const REFRESH_MS = 25000;
 const ROUTES = {
   '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',  stop: '54356', stopName: 'Station Bonaventure' },
   '168': { color: '#43A047', dir: '0', dirName: 'Sud',  stop: '52732', stopName: 'Robert-Bourassa / Viger' },
-  '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '52669', stopName: 'du Beaver Hall / Belmont' },
+  '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '61657', stopName: 'du Beaver Hall / Viger' },
   '777': { color: '#FB8C00', dir: null, dirName: '',    stop: '62148', stopName: 'Station Bonaventure' },
 };
 const DIR_NAMES = { '0': { '74': 'Nord', '168': 'Sud', '35': 'Est', '777': 'Est' },
