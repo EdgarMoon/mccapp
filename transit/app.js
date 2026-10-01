@@ -247,8 +247,10 @@ async function boot() {
   routeData = await (await fetch('data/routes4.json')).json();
   tripDirs = await (await fetch('data/trip_dirs.json')).json();
   initMap();
-  if (!localStorage.getItem('stm_api_key')) showKeyOverlay();
-  else await refresh();
+  if (!localStorage.getItem('stm_api_key')) {
+    document.getElementById('updated').textContent = 'STM API 키를 입력해 주세요';
+    showKeyOverlay();
+  } else await refresh();
   setInterval(refresh, REFRESH_MS);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 }
