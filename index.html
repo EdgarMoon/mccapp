@@ -35,27 +35,34 @@ h1 { font-size: 1.8rem; }
     <strong id="app3t">텍스트 공유</strong>
     <p id="app3d">붙여넣고 링크로 공유하기</p>
   </a>
+  <a class="card" href="/transit/">
+    <strong id="app4t">출근 버스</strong>
+    <p id="app4d">Gare Centrale → 사무실 실시간 버스 도착</p>
+  </a>
 </div>
 <script>
 var S = {
   ko: { title: '우리집 앱',
     app1t: '받아쓰기 연습', app1tag: '구버전', app1d: '프랑스어·영어 받아쓰기 연습 앱 (이 기기에 저장)',
     app2t: '받아쓰기 연습 v2', app2tag: '신버전', app2d: '프랑스어·영어 받아쓰기 연습 앱 (서버 저장, 모든 기기 공유)',
-    app3t: '텍스트 공유', app3d: '붙여넣고 링크로 공유하기' },
+    app3t: '텍스트 공유', app3d: '붙여넣고 링크로 공유하기',
+    app4t: '출근 버스', app4d: 'Gare Centrale → 사무실 실시간 버스 도착' },
   en: { title: 'Our Apps',
     app1t: 'Dictation Practice', app1tag: 'classic', app1d: 'French & English dictation practice app (saved on this device)',
     app2t: 'Dictation Practice v2', app2tag: 'new', app2d: 'French & English dictation practice app (server-saved, shared across devices)',
-    app3t: 'Text Share', app3d: 'Paste and share via link' },
+    app3t: 'Text Share', app3d: 'Paste and share via link',
+    app4t: 'Morning Bus', app4d: 'Real-time bus arrivals: Gare Centrale to office' },
   fr: { title: 'Nos applis',
     app1t: 'Pratique de dictée', app1tag: 'classique', app1d: 'Appli de dictée en français et en anglais (enregistrée sur cet appareil)',
     app2t: 'Pratique de dictée v2', app2tag: 'nouveau', app2d: 'Appli de dictée en français et en anglais (serveur, partagée entre appareils)',
-    app3t: 'Partage de texte', app3d: 'Collez et partagez par lien' }
+    app3t: 'Partage de texte', app3d: 'Collez et partagez par lien',
+    app4t: 'Bus du matin', app4d: 'Arrivées de bus en temps réel : Gare Centrale au bureau' }
 };
 function setL(l) {
   try { localStorage.setItem('mcc-ui-lang', l); } catch(e) {}
   document.querySelectorAll('.lang button').forEach(function(b){ b.classList.toggle('on', b.dataset.l === l); });
   document.getElementById('title').textContent = S[l].title;
-  ['1','2','3'].forEach(function(n){
+  ['1','2','3','4'].forEach(function(n){
     document.getElementById('app'+n+'t').textContent = S[l]['app'+n+'t'];
     document.getElementById('app'+n+'d').textContent = S[l]['app'+n+'d'];
     var tag = document.getElementById('app'+n+'tag');
