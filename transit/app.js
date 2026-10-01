@@ -1,6 +1,6 @@
 /* 출근 버스 — Gare Centrale 실시간 트래커 (STM GTFS-Realtime) */
 const API = 'https://api.stm.info/pub/od/gtfs-rt/ic/v2';
-const REM_EXIT = [45.4993, -73.5679]; // Gare Centrale REM 출구付近
+const REM_EXIT = [45.4994, -73.5652]; // Gare Centrale REM 출구 (Bonaventure/Hilton 쪽)
 const OFFICE = [45.4971, -73.5547];   // 80 Rue Queen (사무실)
 const REFRESH_MS = 25000;
 
@@ -71,7 +71,7 @@ function initMap() {
   }).addTo(map);
   L.marker(REM_EXIT, {
     icon: L.divIcon({ className: '', html: '<div style="font-size:22px">🚇</div>', iconSize: [24, 24], iconAnchor: [12, 12] }),
-  }).addTo(map).bindPopup('<b>Gare Centrale</b> (REM 하차)');
+  }).addTo(map).bindPopup('<b>REM 하차</b> (Bonaventure 쪽 출구)');
   L.marker(OFFICE, {
     icon: L.divIcon({ className: '', html: '<div style="font-size:22px">🏢</div>', iconSize: [24, 24], iconAnchor: [12, 12] }),
   }).addTo(map).bindPopup('<b>사무실</b> (80 Rue Queen)');
