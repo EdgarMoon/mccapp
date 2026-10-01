@@ -66,8 +66,8 @@ async function fetchFeed(name) {
 function initMap() {
   map = L.map('map', { zoomControl: false }).setView(REM_EXIT, 14);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19,
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Esri, HERE, Garmin, OpenStreetMap contributors', maxZoom: 19,
   }).addTo(map);
   L.marker(REM_EXIT, {
     icon: L.divIcon({ className: '', html: '<div style="font-size:22px">🚇</div>', iconSize: [24, 24], iconAnchor: [12, 12] }),
