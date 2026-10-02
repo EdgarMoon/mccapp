@@ -153,6 +153,7 @@ function updateBuses(feed) {
   const now = Date.now() / 1000;
   const seen = new Set();
   routeCounts = {};
+  const items = [];
   for (const e of feed.entity) {
     const v = e.vehicle;
     if (!v || !v.position) continue;
@@ -163,19 +164,49 @@ function updateBuses(feed) {
     seen.add(key);
     routeCounts[rn] = (routeCounts[rn] || 0) + 1;
     const age = v.timestamp ? now - Number(v.timestamp) : 999;
-    const stale = age > 120;
-    const html = `<div class="bus-badge${stale ? ' stale' : ''}" style="background:${ROUTES[rn].color}">${rn}</div>`;
-    const latlng = [v.position.latitude, v.position.longitude];
-    if (busMarkers[key]) {
-      busMarkers[key].setLatLng(latlng);
-      busMarkers[key].setIcon(L.divIcon({ className: '', html, iconSize: [30, 30], iconAnchor: [15, 15] }));
+    items.push({ key, rn, v, age });
+  }
+  // 겹치는 버스 마커 분리: 화면 좌표 기준 30px 이내에 있으면 원형으로 벌려 표시
+  const pts = items.map(it => ({
+    it,
+    p: map.latLngToContainerPoint([it.v.position.latitude, it.v.position.longitude]),
+  }));
+  const R = 30;
+  const groups = [];
+  for (const cur of pts) {
+    const hits = groups.filter(g => g.some(o => Math.hypot(o.p.x - cur.p.x, o.p.y - cur.p.y) < R));
+    if (!hits.length) { groups.push([cur]); continue; }
+    const g = hits[0];
+    g.push(cur);
+    for (const h of hits.slice(1)) { g.push(...h); groups.splice(groups.indexOf(h), 1); }
+  }
+  for (const g of groups) {
+    g.sort((a, b) => (a.it.key < b.it.key ? -1 : 1));
+    const rad = Math.max(22, 11 * g.length);
+    g.forEach((cur, i) => {
+      let p = cur.p;
+      if (g.length > 1) {
+        const ang = (i / g.length) * Math.PI * 2 - Math.PI / 2;
+        p = L.point(p.x + Math.cos(ang) * rad, p.y + Math.sin(ang) * rad);
+      }
+      cur.ll = map.containerPointToLatLng(p);
+    });
+  }
+  for (const cur of pts) {
+    const { it } = cur;
+    const stale = it.age > 120;
+    const html = `<div class="bus-badge${stale ? ' stale' : ''}" style="background:${ROUTES[it.rn].color}">${it.rn}</div>`;
+    const latlng = cur.ll;
+    if (busMarkers[it.key]) {
+      busMarkers[it.key].setLatLng(latlng);
+      busMarkers[it.key].setIcon(L.divIcon({ className: '', html, iconSize: [30, 30], iconAnchor: [15, 15] }));
     } else {
-      busMarkers[key] = L.marker(latlng, {
+      busMarkers[it.key] = L.marker(latlng, {
         icon: L.divIcon({ className: '', html, iconSize: [30, 30], iconAnchor: [15, 15] }),
       }).addTo(map);
     }
-    const dirName = (DIR_NAMES[tripDir(v.trip)] || {})[rn] || '';
-    busMarkers[key].bindPopup(`<b>${rn}번</b> ${dirName}<br><span style="color:#888">${Math.max(0, Math.round(age))}초 전 위치</span>`);
+    const dirName = (DIR_NAMES[tripDir(it.v.trip)] || {})[it.rn] || '';
+    busMarkers[it.key].bindPopup(`<b>${it.rn}번</b> ${dirName}<br><span style="color:#888">${Math.max(0, Math.round(it.age))}초 전 위치</span>`);
   }
   for (const [k, m] of Object.entries(busMarkers)) {
     if (!seen.has(k)) { map.removeLayer(m); delete busMarkers[k]; }
