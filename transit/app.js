@@ -99,7 +99,7 @@ function initMap() {
               `${ROUTES[r].color} ${Math.round(i * 100 / keyRns.length)}% ${Math.round((i + 1) * 100 / keyRns.length)}%`
             ).join(', ') + ')';
         m = L.marker([s.lat, s.lon], {
-          icon: L.divIcon({ className: '', html: `<div class="key-pin" style="background:${bg}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
+          icon: L.divIcon({ className: '', html: `<div class="key-pin" style="background:${bg}">${keyRns.join('/')}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] }),
         });
       } else {
         m = L.circleMarker([s.lat, s.lon], { radius: 3.5, color: '#666', weight: 1, fillColor: '#fff', fillOpacity: 1 });
@@ -264,7 +264,7 @@ function updateArrivals(feed) {
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002d';
+const APP_VERSION = '20261002e';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
