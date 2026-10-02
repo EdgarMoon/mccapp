@@ -251,11 +251,30 @@ function updateArrivals(feed) {
   }
 }
 
+// 배포 시 version.json의 v와 함께 올릴 것
+const APP_VERSION = '20261002c';
+async function checkVersion() {
+  try {
+    const r = await fetch('version.json?ts=' + Date.now());
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.v && j.v !== APP_VERSION && !document.getElementById('verBanner')) {
+      const b = document.createElement('div');
+      b.id = 'verBanner';
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#333;color:#fff;text-align:center;padding:10px;font-size:14px;';
+      b.textContent = '새 버전이 있습니다 — 눌러서 새로고침';
+      b.onclick = () => location.reload();
+      document.body.appendChild(b);
+    }
+  } catch (e) { /* 무시 */ }
+}
+
 async function refresh() {
   try {
     const [vp, tu] = await Promise.all([fetchFeed('vehiclePositions'), fetchFeed('tripUpdates')]);
     updateBuses(vp);
     updateArrivals(tu);
+    checkVersion();
     const d = new Date();
     document.getElementById('updated').textContent =
       '업데이트 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
