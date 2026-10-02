@@ -4,12 +4,22 @@ const REM_EXIT = [45.4994, -73.5652]; // Gare Centrale REM 출구 (Bonaventure/H
 const OFFICE = [45.4971, -73.5547];   // 80 Rue Queen (사무실)
 const REFRESH_MS = 25000;
 
-const ROUTES = {
-  '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',  stop: '52732', stopName: 'Robert-Bourassa / Viger' },
-  '168': { color: '#43A047', dir: '0', dirName: 'Sud',  stop: '52732', stopName: 'Robert-Bourassa / Viger' },
-  '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '61657', stopName: 'du Beaver Hall / Viger' },
-  '777': { color: '#FB8C00', dir: null, dirName: '',    stop: '62148', stopName: 'Station Bonaventure' },
+const MODES = {
+  am: { label: '출근', origin: 'REM_EXIT', routes: {
+    '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger' },
+    '168': { color: '#43A047', dir: '0', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger' },
+    '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '61657', stopName: 'du Beaver Hall / Viger' },
+    '777': { color: '#FB8C00', dir: null, dirName: '',     stop: '62148', stopName: 'Station Bonaventure' },
+  }},
+  pm: { label: '퇴근', origin: 'OFFICE', routes: {
+    '74':  { color: '#1E88E5', dir: '0', dirName: 'Nord',  stop: '62076', stopName: 'Robert-Bourassa / Ottawa' },
+    '168': { color: '#43A047', dir: '1', dirName: 'Nord',  stop: '52973', stopName: 'Robert-Bourassa / Wellington' },
+    '777': { color: '#FB8C00', dir: '1', dirName: 'Ouest', stop: '52973', stopName: 'Robert-Bourassa / Wellington' },
+  }},
 };
+const MODE = localStorage.getItem('commute-mode') || 'am';
+const ROUTES = MODES[MODE].routes;
+const ORIGIN = MODES[MODE].origin === 'OFFICE' ? OFFICE : REM_EXIT;
 const DIR_NAMES = { '0': { '74': 'Nord', '168': 'Sud', '35': 'Est', '777': 'Est' },
                     '1': { '74': 'Sud',  '168': 'Nord', '35': 'Ouest', '777': 'Ouest' } };
 
@@ -38,7 +48,7 @@ function haversine(a, b) {
 }
 function walkMin(latlng) {
   const p = Array.isArray(latlng) ? latlng : [latlng.lat, latlng.lng];
-  return Math.max(1, Math.round(haversine(REM_EXIT, p) / 80));
+  return Math.max(1, Math.round(haversine(ORIGIN, p) / 80));
 }
 function fmtMins(m) {
   if (m < 1) return '<span class="soon">곧 도착</span>';
@@ -65,7 +75,7 @@ async function fetchFeed(name) {
 }
 
 function initMap() {
-  map = L.map('map', { zoomControl: false }).setView(REM_EXIT, 14);
+  map = L.map('map', { zoomControl: false }).setView(ORIGIN, 14);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Esri, HERE, Garmin, OpenStreetMap contributors', maxZoom: 19,
@@ -264,7 +274,7 @@ function updateArrivals(feed) {
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002f';
+const APP_VERSION = '20261002g';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
@@ -319,6 +329,13 @@ async function boot() {
 
 document.getElementById('btnRefresh').onclick = refresh;
 document.getElementById('btnKey').onclick = showKeyOverlay;
+document.getElementById('appTitle').textContent = `🚌 ${MODES[MODE].label} 버스`;
+document.title = `${MODES[MODE].label} 버스 — Gare Centrale`;
+document.getElementById('btnMode').textContent = MODE === 'am' ? '🌇 퇴근' : '🌅 출근';
+document.getElementById('btnMode').onclick = () => {
+  localStorage.setItem('commute-mode', MODE === 'am' ? 'pm' : 'am');
+  location.reload();
+};
 document.getElementById('keySave').onclick = () => {
   const v = document.getElementById('keyInput').value.trim();
   if (!v) return;
