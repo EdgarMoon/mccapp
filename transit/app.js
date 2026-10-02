@@ -17,6 +17,7 @@ let FeedMessage = null;
 let map, routeData = {}, tripDirs = {};
 let busMarkers = {};   // vehicleKey -> marker
 let stopMarkers = {};  // stopId -> marker
+const seenStopIds = new Set();
 let arrivals = {};      // stopId -> [{route, dir, mins}]
 let routeCounts = {};
 
@@ -86,12 +87,23 @@ function initMap() {
       }).addTo(map);
     }
     for (const s of rd.stops) {
-      const isKey = Object.values(ROUTES).some(k => k.stop === s.id);
-      const m = isKey
-        ? L.marker([s.lat, s.lon], {
-            icon: L.divIcon({ className: '', html: `<div class="key-pin" style="background:${cfg.color}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
-          })
-        : L.circleMarker([s.lat, s.lon], { radius: 3.5, color: '#666', weight: 1, fillColor: '#fff', fillOpacity: 1 });
+      if (seenStopIds.has(s.id)) continue;
+      seenStopIds.add(s.id);
+      // 같은 정류장을 쓰는 노선이 여러 개면 색을 합친 핀 1개로 표시
+      const keyRns = Object.keys(ROUTES).filter(r => ROUTES[r].stop === s.id);
+      let m;
+      if (keyRns.length) {
+        const bg = keyRns.length === 1
+          ? ROUTES[keyRns[0]].color
+          : 'conic-gradient(' + keyRns.map((r, i) =>
+              `${ROUTES[r].color} ${Math.round(i * 100 / keyRns.length)}% ${Math.round((i + 1) * 100 / keyRns.length)}%`
+            ).join(', ') + ')';
+        m = L.marker([s.lat, s.lon], {
+          icon: L.divIcon({ className: '', html: `<div class="key-pin" style="background:${bg}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
+        });
+      } else {
+        m = L.circleMarker([s.lat, s.lon], { radius: 3.5, color: '#666', weight: 1, fillColor: '#fff', fillOpacity: 1 });
+      }
       m.bindPopup(() => popupHtml(s.id, s.name));
       m.addTo(map);
       stopMarkers[s.id] = m;
@@ -252,7 +264,7 @@ function updateArrivals(feed) {
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002c';
+const APP_VERSION = '20261002d';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
