@@ -130,13 +130,39 @@ function initMap() {
   map.fitBounds(bounds, { padding: [36, 36] });
 }
 
+function arrBadge(a) {
+  const c = ROUTES[a.route] ? ROUTES[a.route].color : '#333';
+  return `<span style="display:inline-block;min-width:34px;text-align:center;background:${c};color:#fff;border-radius:6px;font-weight:700;padding:0 6px;margin-right:6px">${a.route}</span> <b class="arr">${fmtMins(a.mins)}</b> <span style="color:#666">${a.dirName}</span><br>`;
+}
+function findStop(stopId) {
+  for (const rd of Object.values(routeData)) {
+    const s = (rd.stops || []).find(s => s.id === stopId);
+    if (s) return s;
+  }
+  return null;
+}
 function popupHtml(stopId, name) {
   const list = (arrivals[stopId] || []).slice(0, 6);
   let h = `<b>${name}</b><br><span style="color:#888">정류장 ${stopId}</span><br>`;
   if (!list.length) h += '도착 정보 없음';
-  for (const a of list) {
-    const c = ROUTES[a.route] ? ROUTES[a.route].color : '#333';
-    h += `<span style="display:inline-block;min-width:34px;text-align:center;background:${c};color:#fff;border-radius:6px;font-weight:700;padding:0 6px;margin-right:6px">${a.route}</span> <b class="arr">${fmtMins(a.mins)}</b> <span style="color:#666">${a.dirName}</span><br>`;
+  for (const a of list) h += arrBadge(a);
+  // 근처 정류장(150m 이내)의 도착 정보도 함께 표시
+  const me = findStop(stopId);
+  if (me) {
+    const near = [];
+    for (const rd of Object.values(routeData)) {
+      for (const s of rd.stops || []) {
+        if (s.id === stopId || near.some(n => n.id === s.id)) continue;
+        if (!(arrivals[s.id] || []).length) continue;
+        if (haversine([me.lat, me.lon], [s.lat, s.lon]) > 150) continue;
+        near.push(s);
+      }
+    }
+    near.sort((a, b) => haversine([me.lat, me.lon], [a.lat, a.lon]) - haversine([me.lat, me.lon], [b.lat, b.lon]));
+    for (const s of near.slice(0, 3)) {
+      h += `<br><span style="color:#888">🚏 근처: <b>${s.name}</b></span><br>`;
+      for (const a of (arrivals[s.id] || []).slice(0, 4)) h += arrBadge(a);
+    }
   }
   return h;
 }
@@ -274,7 +300,7 @@ function updateArrivals(feed) {
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002g';
+const APP_VERSION = '20261002h';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
