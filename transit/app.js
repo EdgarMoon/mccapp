@@ -6,7 +6,7 @@ const REFRESH_MS = 25000;
 
 const MODES = {
   am: { label: '출근', origin: 'REM_EXIT', routes: {
-    '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger' },
+    '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger', stop2: '54356', stop2Name: 'Station Bonaventure' },
     '168': { color: '#43A047', dir: '0', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger' },
     '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '61657', stopName: 'du Beaver Hall / Viger' },
     '777': { color: '#FB8C00', dir: null, dirName: '',     stop: '62148', stopName: 'Station Bonaventure' },
@@ -100,7 +100,7 @@ function initMap() {
       if (seenStopIds.has(s.id)) continue;
       seenStopIds.add(s.id);
       // 같은 정류장을 쓰는 노선이 여러 개면 색을 합친 핀 1개로 표시
-      const keyRns = Object.keys(ROUTES).filter(r => ROUTES[r].stop === s.id);
+      const keyRns = Object.keys(ROUTES).filter(r => ROUTES[r].stop === s.id || ROUTES[r].stop2 === s.id);
       let m;
       if (keyRns.length) {
         const bg = keyRns.length === 1
@@ -160,7 +160,8 @@ function buildPanel() {
       <div class="route" style="color:${cfg.color}">${rn}</div>
       <div class="dir">${cfg.dirName ? cfg.dirName + '행 · ' : ''}${cfg.stopName}</div>
       <div class="walk" id="walk-${rn}"></div>
-      <div class="times" id="times-${rn}">…</div>`;
+      <div class="times" id="times-${rn}">…</div>
+      ${cfg.stop2 ? `<div class="dir" style="margin-top:8px">이전 정류장 · ${cfg.stop2Name}</div><div class="times" id="times-${rn}-2">…</div>` : ''}`;
     card.onclick = () => {
       const m = stopMarkers[cfg.stop];
       if (m) { map.flyTo(m.getLatLng(), 16, { duration: 0.8 }); setTimeout(() => m.openPopup(), 850); }
@@ -261,20 +262,24 @@ function updateArrivals(feed) {
     arrivals[sid].sort((a, b) => a.mins - b.mins);
   }
   // 패널 갱신
-  for (const [rn, cfg] of Object.entries(ROUTES)) {
-    const el = document.getElementById('times-' + rn);
-    if (!el) continue;
-    let list = (arrivals[cfg.stop] || []).filter(a => a.route === rn);
+  const renderTimes = (elId, rn, cfg, stopId) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    let list = (arrivals[stopId] || []).filter(a => a.route === rn);
     if (cfg.dir) list = list.filter(a => a.dir === cfg.dir);
     list = list.slice(0, 2);
     el.innerHTML = list.length
       ? list.map(a => fmtMins(a.mins)).join(' · ')
       : '<span class="none">2시간 내 도착 없음</span>';
+  };
+  for (const [rn, cfg] of Object.entries(ROUTES)) {
+    renderTimes('times-' + rn, rn, cfg, cfg.stop);
+    if (cfg.stop2) renderTimes('times-' + rn + '-2', rn, cfg, cfg.stop2);
   }
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002i';
+const APP_VERSION = '20261002j';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
