@@ -9,7 +9,7 @@ const MODES = {
     '74':  { color: '#1E88E5', dir: '1', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger', stop2: '54356', stop2Name: 'Station Bonaventure' },
     '168': { color: '#43A047', dir: '0', dirName: 'Sud',   stop: '52732', stopName: 'Robert-Bourassa / Viger' },
     '35':  { color: '#8E24AA', dir: '1', dirName: 'Ouest', stop: '61657', stopName: 'du Beaver Hall / Viger' },
-    '777': { color: '#FB8C00', dir: null, dirName: '',     stop: '62148', stopName: 'Station Bonaventure' },
+    '777': { color: '#FB8C00', dir: '0', dirName: 'Est',   stop: '62148', stopName: 'Station Bonaventure' },
   }},
   pm: { label: '퇴근', origin: 'OFFICE', routes: {
     '74':  { color: '#1E88E5', dir: '0', dirName: 'Nord',  stop: '62076', stopName: 'Robert-Bourassa / Ottawa' },
@@ -279,7 +279,7 @@ function updateArrivals(feed) {
 }
 
 // 배포 시 version.json의 v와 함께 올릴 것
-const APP_VERSION = '20261002j';
+const APP_VERSION = '20261002k';
 async function checkVersion() {
   try {
     const r = await fetch('version.json?ts=' + Date.now());
